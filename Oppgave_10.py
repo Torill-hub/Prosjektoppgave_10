@@ -17,6 +17,10 @@ def moving_avg(times, temperatures, n):#reduserer støy ved å beregne gjennomsn
 
     return valid_times, avg
 
+#Start tider 
+start_time = datetime(2021, 6, 11, 17, 31)
+end_time = datetime(2021, 6, 12, 3, 5)
+start_date = datetime(2021, 6, 11, 0, 0)
 
 #lister for ulike målinger
 times_sola = []
@@ -28,7 +32,13 @@ pressures_abs_local = []
 pressures_bar_local =[]
 temperatures_local =[]
 
-with open("GitHub/DAT120_-ving_6_Prosjektoppgave/LOKAL.csv", "r") as LOKAL:
+sirdal_temp = []
+sirdal_trykk = []
+sauda_temp = []
+sauda_trykk = []
+time_sauda_sirdal = []
+
+with open("./LOKAL.csv", "r") as LOKAL:
     file = csv.reader(LOKAL, delimiter=';')
     next(file)                                      #Hopper over første linje; da denne har "feil" input 
     for row in file:
@@ -68,7 +78,7 @@ with open("GitHub/DAT120_-ving_6_Prosjektoppgave/LOKAL.csv", "r") as LOKAL:
                     pass
 
 
-with open("GitHub/DAT120_-ving_6_Prosjektoppgave/SOLA.csv", "r") as SOLA:
+with open("./SOLA.csv", "r") as SOLA:
     file = csv.reader(SOLA, delimiter=';')
     next(file)
     for row in file:
@@ -92,15 +102,43 @@ with open("GitHub/DAT120_-ving_6_Prosjektoppgave/SOLA.csv", "r") as SOLA:
             except ValueError:                                          #Dersom en verdi error oppstår, slik som i første linje, hopper python over
                 pass
 
+#Oppgave D; Tidene er like som for SOLA og SIRDAL_SAUDA            
+with open("./SIRDAL_SAUDA.csv") as f:
+    file = csv.reader(f, delimiter=";")
+    next(file)
+    
+    for line in file:
+        if line[2]:  
+            try:
+                date_obj = datetime.strptime(line[2], "%d.%m.%Y %H:%M")
+                if date_obj >= start_date:
+                    
+                    if line[0] == "Sirdal - Sinnes":
+                        sirdal_temp.append(float(line[3].replace(',', '.')))
+                        sirdal_trykk.append(float(line[4].replace(',', '.')))
+                        
+                        
+                        if date_obj and date_obj not in time_sauda_sirdal:
+                            time_sauda_sirdal.append(date_obj)
+                        
+                    elif line[0] == "Sauda":
+                        sauda_temp.append(float(line[3].replace(',', '.')))
+                        sauda_trykk.append(float(line[4].replace(',', '.')))
+                        
+                        
+                        if date_obj and date_obj not in time_sauda_sirdal:
+                            time_sauda_sirdal.append(date_obj)
+
+            except ValueError:
+                pass
+             
+
 times_local_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_local]
 times_sola_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_sola]
 times_bar_local_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_bar_local]
            
 n=30
 valid_times, avg = moving_avg(times_local_datetime, temperatures_local, n)
-
-start_time = datetime(2021, 6, 11, 17, 31)
-end_time = datetime(2021, 6, 12, 3, 5)
 
 temperatures_local_filtered = []
 times_local_filtered = []
@@ -139,31 +177,61 @@ else:
     temperaturfall_times_sola = []
     temperaturfall_values_sola = []
 
+#Temperatur PLOT
 plt.figure(figsize=(10, 5))
-plt.subplot(2, 1, 1)
+plt.subplot(2, 2, 1)
 plt.plot(times_local_filtered, temperatures_local_filtered, label="Lokal værstasjon", color='blue')
 plt.plot(times_sola_datetime, temperatures_sola, label="Sola værstasjon", color="green")
 plt.plot(times_local_datetime, temperatures_local, label="Lokal værstasjon ufiltrert", color='red')
 plt.plot(valid_times, avg, label="Gjennomsnitt (n=30)", color="purple")
 plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturmålinger far Maksimal til Minimal")
+plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturfall Lokal værstasjon")
+plt.plot(temperaturfall_times_sola, temperaturfall_values_sola, label="Temperaturfall Sola værstasjon")
+
 
 plt.xlabel("Tid")
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperatur fra begge værstasjoner")
 plt.legend()
 
-plt.subplot(2, 1, 2)
+#TEMPERATUR SIRDAL/SAUDA 
+plt.subplot(2, 2, 2)
+plt.plot(time_sauda_sirdal, sirdal_temp, label= "Sirdal værstasjon")
+plt.plot(time_sauda_sirdal, sauda_temp, label = "Sauda værstasjon")
+plt.plot(times_sola_datetime, temperatures_sola, label = "Sola værstasjon")
+plt.plot(valid_times, avg, label="UIS værstasjon")
+
+plt.xlabel("Tid")
+plt.ylabel("Temperatur (°C)")
+plt.title("Temperaturer fra Sola, Sirdal, Sauda og filtrert UIS data")
+plt.legend()
+
+#Trykk PLOT
+plt.subplot(2, 2, 3)
 plt.title("Trykk fra begge værstasjoner")
-plt.plot(times_local_datetime, pressures_abs_local, label = "Absoluttrykk Lokal stasjon") #Fungerer alene
-plt.plot(times_bar_local_datetime, pressures_bar_local, label = "Barometrisk trykk lokal stasjon") #Fungerer alene
-plt.plot(times_sola_datetime, pressures_sola, label = "Barometrisk trykk Sola værstasjon") #Får den ikke opp,
+plt.plot(times_local_datetime, pressures_abs_local, label = "Absoluttrykk Lokal stasjon") 
+plt.plot(times_bar_local_datetime, pressures_bar_local, label = "Barometrisk trykk lokal stasjon") 
+plt.plot(times_sola_datetime, pressures_sola, label = "Barometrisk trykk Sola værstasjon") 
 plt.xlabel("Tid")
 plt.ylabel("Trykk Pha")
 plt.legend()
 
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.show()
+
+#Trykk fra nye data
+valid_time, average_pressure = moving_avg(times_bar_local_datetime, pressures_bar_local, 50)
+
+plt.subplot(2, 2, 4)
+plt.plot(time_sauda_sirdal, sirdal_trykk, label = "Sirdal lufttrykk")
+plt.plot(time_sauda_sirdal, sauda_trykk, label = "Sauda lufttrykk")
+plt.plot(times_sola_datetime, pressures_sola, label = "Barometrisk trykk Sola værstasjon")
+plt.plot(valid_time, average_pressure, label = "UIS lufttrykk, n = 30") 
+
+plt.xlabel("Tid")
+plt.ylabel("Trykk Pha")
+plt.title("Trykkmålinger fra Sirdal, Sauda, Sola og UIS")
+plt.legend()
 
 #plott temperaturfall fra begge filene
 plt.figure(figsize=(10, 5))
@@ -173,7 +241,6 @@ plt.xlabel("Tid")
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperaturfall fra maks til min temperatur")
 plt.legend()
-plt.show()
 
 #plott et histogram over temperaturene fra begge filene, bruk en hel grad for hver søyle
 plt.figure(figsize=(10, 5))
