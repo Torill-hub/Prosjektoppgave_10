@@ -77,7 +77,6 @@ with open("./LOKAL.csv", "r") as LOKAL:
                 except ValueError:
                     pass
 
-
 with open("./SOLA.csv", "r") as SOLA:
     file = csv.reader(SOLA, delimiter=';')
     next(file)
@@ -117,21 +116,15 @@ with open("./SIRDAL_SAUDA.csv") as f:
                         sirdal_temp.append(float(line[3].replace(',', '.')))
                         sirdal_trykk.append(float(line[4].replace(',', '.')))
                         
-                        
-                        if date_obj and date_obj not in time_sauda_sirdal:
-                            time_sauda_sirdal.append(date_obj)
-                        
                     elif line[0] == "Sauda":
                         sauda_temp.append(float(line[3].replace(',', '.')))
                         sauda_trykk.append(float(line[4].replace(',', '.')))
                         
-                        
-                        if date_obj and date_obj not in time_sauda_sirdal:
-                            time_sauda_sirdal.append(date_obj)
+                    if date_obj and date_obj not in time_sauda_sirdal:
+                        time_sauda_sirdal.append(date_obj)
 
             except ValueError:
                 pass
-             
 
 times_local_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_local]
 times_sola_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_sola]
@@ -157,8 +150,8 @@ if temperatures_local_filtered:
 else:
     temperaturfall_times = []
     temperaturfall_values = []
+    
 #plotter inn temperatur fra begge filene
-
 temperatures_sola_filtered = []
 times_sola_filtered = []
 
@@ -187,7 +180,6 @@ plt.plot(valid_times, avg, label="Gjennomsnitt (n=30)", color="black")
 plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturmålinger far Maksimal til Minimal")
 plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturfall Lokal værstasjon")
 plt.plot(temperaturfall_times_sola, temperaturfall_values_sola, label="Temperaturfall Sola værstasjon")
-
 
 plt.xlabel("Tid")
 plt.ylabel("Temperatur (°C)")
