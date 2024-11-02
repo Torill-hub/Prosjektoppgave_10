@@ -137,10 +137,12 @@ times_local_std = times_local_filtered[n-1:]
  
 # Plotting av temperaturdata med standardavvik
 plt.figure(figsize=(10, 5))
-plt.errorbar(times_local_std, temperatures_local_filtered[n-1:], yerr=std_dev_local, errorevery=30, capsize=5, label="Lokal værstasjon med standardavvik", color='blue')
+plt.errorbar(times_local_std, temperatures_local_filtered[n-1:], yerr=std_dev_local, errorevery=30, capsize=5, color='red', label="Standardavvik", zorder=1)
+plt.plot(times_local_std, temperatures_local_filtered[n-1:], label="Lokal værstasjon", color="blue", linestyle="-", zorder=2)
+
 plt.xlabel("Tid")
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperaturmålinger med standardavvik")
 plt.legend()
 plt.show()
- 
+
