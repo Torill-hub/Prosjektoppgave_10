@@ -170,6 +170,21 @@ else:
     temperaturfall_times_sola = []
     temperaturfall_values_sola = []
 
+#oppgave c: plott differansen mellom absolutt og barometrisk trykk i Lokal.csv
+pressure_diff_local = list()
+for i in range(len(pressures_bar_local)):
+    pressure_diff = pressures_abs_local[i*6] - pressures_bar_local[i] #litt jank måte kanskje, men så i csv filen er det 6 barometriske trykk for hvert absolutte trykk
+    #print(pressure_diff) #for å sjekke at det er riktig
+    pressure_diff_local.append(pressure_diff)
+pr_diff_time, pr_diff_value = moving_avg(times_bar_local_datetime, pressure_diff_local, 10) #Så vidt eg forstår så er "n" her antall bade foran og bak, altså 10 foran og 10 bak i funkjsonen
+
+plt.figure(figsize=(10, 5))
+plt.xlabel("Tid")
+plt.ylabel("Temperatur (°C)")
+plt.title("Differanse mellom absolutt og barometrisk trykk")
+plt.plot(pr_diff_time, pr_diff_value, label = "Differanse mellom absolutt og barometrisk trykk")
+
+
 #Temperatur PLOT
 plt.figure(figsize=(10, 5))
 plt.subplot(2, 2, 1)
