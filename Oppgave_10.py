@@ -2,6 +2,7 @@
 import csv
 from datetime import datetime
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def moving_avg(times, temperatures, n):#reduserer støy ved å beregne gjennomsnittet
@@ -17,6 +18,14 @@ def moving_avg(times, temperatures, n):#reduserer støy ved å beregne gjennomsn
 
     return valid_times, avg
 
+def calculate_standard_deviation(data, n):
+    std_devs = []
+    for i in range(len(data) - n + 1):
+        window = data[i:i+n]
+        std_dev = np.std(window, ddof=1)
+        std_devs.append(std_dev)
+    return std_devs
+ 
 #Start tider 
 start_time = datetime(2021, 6, 11, 17, 31)
 end_time = datetime(2021, 6, 12, 3, 5)
@@ -170,6 +179,60 @@ else:
     temperaturfall_times_sola = []
     temperaturfall_values_sola = []
 
+#######################################
+    
+#OPPGAVE E OG F
+# Konvertering av tidspunkter til datetime-objekter
+times_local_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_local]
+times_sola_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_sola]
+ 
+# Oppgave e: Gjennomsnittlig forskjell mellom temperatur og trykk
+# Filtrere data for felles tidspunkter
+common_times = set(times_local_datetime).intersection(times_sola_datetime)
+common_times = sorted(common_times)
+ 
+# Beregne forskjeller i temperatur og trykk
+temp_diffs = []
+pressure_diffs = []
+for time in common_times:
+    local_index = times_local_datetime.index(time)
+    sola_index = times_sola_datetime.index(time)
+    temp_diff = abs(temperatures_local[local_index] - temperatures_sola[sola_index])
+    pressure_diff = abs(pressures_abs_local[local_index] - pressures_sola[sola_index])
+    temp_diffs.append(temp_diff)
+    pressure_diffs.append(pressure_diff)
+ 
+# Beregne gjennomsnittlig forskjell
+avg_temp_diff = np.mean(temp_diffs)
+avg_pressure_diff = np.mean(pressure_diffs)
+ 
+# Finne tidspunkter med lavest og høyest forskjell
+min_temp_diff_time = common_times[temp_diffs.index(min(temp_diffs))]
+max_temp_diff_time = common_times[temp_diffs.index(max(temp_diffs))]
+min_pressure_diff_time = common_times[pressure_diffs.index(min(pressure_diffs))]
+max_pressure_diff_time = common_times[pressure_diffs.index(max(pressure_diffs))]
+
+# Oppgave f: Plotting av standardavvik for den første datafila (Rune Time datasettet)
+# Filtrere data for plotting
+n=30
+valid_times, avg_temp_local = moving_avg(times_local_datetime, temperatures_local, n)
+ 
+temperatures_local_filtered = []
+times_local_filtered = []
+ 
+for time, temperature in zip(times_local_datetime, temperatures_local):
+    if start_time <= time <= end_time:
+        times_local_filtered.append(time)
+        temperatures_local_filtered.append(temperature)
+ 
+# Beregne standardavvik for temperaturdataene
+std_dev_local = calculate_standard_deviation(temperatures_local_filtered, n)
+ 
+# Juster tidspunktene for å matche lengden på standardavvik-listene
+times_local_std = times_local_filtered[n-1:]
+
+#########################################
+
 #oppgave c: plott differansen mellom absolutt og barometrisk trykk i Lokal.csv
 pressure_diff_local = list()
 for i in range(len(pressures_bar_local)):
@@ -182,9 +245,9 @@ pr_diff_time, pr_diff_value = moving_avg(times_bar_local_datetime, pressure_diff
 valid_time, average_pressure = moving_avg(times_bar_local_datetime, pressures_bar_local, 30)
 
 # Temperatur PLOT
-plt.figure(figsize=(15, 10))
+plt.figure(figsize=(30, 20))
 
-plt.subplot(2, 3, 1)
+plt.subplot(2, 4, 1)
 plt.plot(times_local_filtered, temperatures_local_filtered, label="Lokal værstasjon", color='blue')
 plt.plot(times_sola_datetime, temperatures_sola, label="Sola værstasjon", color="green")
 plt.plot(times_local_datetime, temperatures_local, label="Lokal værstasjon ufiltrert", color='red')
@@ -192,63 +255,78 @@ plt.plot(valid_times, avg, label="Gjennomsnitt (n=30)", color="black")
 plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturfall Lokal værstasjon")
 plt.plot(temperaturfall_times_sola, temperaturfall_values_sola, label="Temperaturfall Sola værstasjon")
 plt.xlabel("Tid")
+plt.xticks(rotation = 30)
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperatur fra begge værstasjoner")
 plt.legend()
 
-plt.subplot(2, 3, 2)
+plt.subplot(2, 4, 2)
 plt.plot(time_sauda_sirdal, sirdal_temp, label="Sirdal værstasjon")
 plt.plot(time_sauda_sirdal, sauda_temp, label="Sauda værstasjon")
 plt.plot(times_sola_datetime, temperatures_sola, label="Sola værstasjon")
 plt.plot(valid_times, avg, label="UIS værstasjon, n=30")
 plt.xlabel("Tid")
+plt.xticks(rotation = 30)
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperaturer fra Sola, Sirdal, Sauda og filtrert UIS data")
 plt.legend()
 
-plt.subplot(2, 3, 3)
+plt.subplot(2, 4, 3)
 plt.hist(temperatures_local, bins=range(int(min(temperatures_local)), int(max(temperatures_local)) + 1), alpha=0.5, label="Lokal værstasjon")
 plt.hist(temperatures_sola, bins=range(int(min(temperatures_sola)), int(max(temperatures_sola)) + 1), alpha=0.5, label="Sola værstasjon")
 plt.xlabel("Temperatur (°C)")
+plt.xticks(rotation = 30)
 plt.ylabel("Antall")
 plt.title("Histogram over temperaturer")
 plt.legend()
 
-plt.subplot(2, 3, 4)
+# Plotting av temperaturdata med standardavvik
+plt.subplot(2, 4, 4)
+plt.errorbar(times_local_std, temperatures_local_filtered[n-1:], yerr=std_dev_local, errorevery=30, capsize=5, color='red', label="Standardavvik", zorder=1)
+plt.plot(times_local_std, temperatures_local_filtered[n-1:], label="Lokal værstasjon", color="blue", linestyle="-", zorder=2)
+plt.xlabel("Tid")
+plt.xticks(rotation = 30)
+plt.ylabel("Temperatur (°C)")
+plt.title("Temperaturmålinger med standardavvik")
+plt.legend()
+
+plt.subplot(2, 4, 5)
 plt.plot(times_local_datetime, pressures_abs_local, label="Absoluttrykk Lokal stasjon")
 plt.plot(times_bar_local_datetime, pressures_bar_local, label="Barometrisk trykk lokal stasjon")
 plt.plot(times_sola_datetime, pressures_sola, label="Barometrisk trykk Sola værstasjon")
 plt.xlabel("Tid")
+plt.xticks(rotation = 45)
 plt.ylabel("Trykk Pha")
 plt.title("Trykk fra begge værstasjoner")
 plt.legend()
 
-plt.subplot(2, 3, 5)
+plt.subplot(2, 4, 6)
 plt.plot(time_sauda_sirdal, sirdal_trykk, label="Sirdal lufttrykk")
 plt.plot(time_sauda_sirdal, sauda_trykk, label="Sauda lufttrykk")
 plt.plot(times_sola_datetime, pressures_sola, label="Barometrisk trykk Sola værstasjon")
 plt.plot(valid_time, average_pressure, label="UIS lufttrykk, n=30")
 plt.xlabel("Tid")
+plt.xticks(rotation = 45)
 plt.ylabel("Trykk Pha")
 plt.title("Trykkmålinger fra Sirdal, Sauda, Sola og UIS")
 plt.legend()
 
-plt.subplot(2, 3, 6)
+plt.subplot(2, 4, 7)
 plt.plot(pr_diff_time, pr_diff_value, label="Differanse mellom absolutt og barometrisk trykk")
 plt.xlabel("Tid")
+plt.xticks(rotation = 45)
 plt.ylabel("Differanse i trykk")
 plt.title("Differanse mellom absolutt og barometrisk trykk")
 plt.legend()
-
-plt.tight_layout()
-plt.show()
 
 #TEMPERATURFALL - Ligger under temperaturplot(Kan evt fjernes)
 plt.figure(figsize=(10, 5))
 plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturfall Lokal værstasjon")
 plt.plot(temperaturfall_times_sola, temperaturfall_values_sola, label="Temperaturfall Sola værstasjon")
 plt.xlabel("Tid")
+plt.xticks(rotation = 45)
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperaturfall fra maks til min temperatur")
 plt.legend()
+
 plt.show()
