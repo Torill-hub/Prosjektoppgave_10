@@ -178,83 +178,77 @@ for i in range(len(pressures_bar_local)):
     pressure_diff_local.append(pressure_diff)
 pr_diff_time, pr_diff_value = moving_avg(times_bar_local_datetime, pressure_diff_local, 10) #Så vidt eg forstår så er "n" her antall bade foran og bak, altså 10 foran og 10 bak i funkjsonen
 
-plt.figure(figsize=(10, 5))
-plt.xlabel("Tid")
-plt.ylabel("Temperatur (°C)")
-plt.title("Differanse mellom absolutt og barometrisk trykk")
-plt.plot(pr_diff_time, pr_diff_value, label = "Differanse mellom absolutt og barometrisk trykk")
+#Trykk fra nye data
+valid_time, average_pressure = moving_avg(times_bar_local_datetime, pressures_bar_local, 30)
 
+# Temperatur PLOT
+plt.figure(figsize=(15, 10))
 
-#Temperatur PLOT
-plt.figure(figsize=(10, 5))
-plt.subplot(2, 2, 1)
+plt.subplot(2, 3, 1)
 plt.plot(times_local_filtered, temperatures_local_filtered, label="Lokal værstasjon", color='blue')
 plt.plot(times_sola_datetime, temperatures_sola, label="Sola værstasjon", color="green")
 plt.plot(times_local_datetime, temperatures_local, label="Lokal værstasjon ufiltrert", color='red')
 plt.plot(valid_times, avg, label="Gjennomsnitt (n=30)", color="black")
-plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturmålinger far Maksimal til Minimal")
 plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturfall Lokal værstasjon")
 plt.plot(temperaturfall_times_sola, temperaturfall_values_sola, label="Temperaturfall Sola værstasjon")
-
 plt.xlabel("Tid")
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperatur fra begge værstasjoner")
 plt.legend()
 
-#TEMPERATUR SIRDAL/SAUDA 
-plt.subplot(2, 2, 2)
-plt.plot(time_sauda_sirdal, sirdal_temp, label= "Sirdal værstasjon")
-plt.plot(time_sauda_sirdal, sauda_temp, label = "Sauda værstasjon")
-plt.plot(times_sola_datetime, temperatures_sola, label = "Sola værstasjon")
-plt.plot(valid_times, avg, label="UIS værstasjon, n = 30")
-
+plt.subplot(2, 3, 2)
+plt.plot(time_sauda_sirdal, sirdal_temp, label="Sirdal værstasjon")
+plt.plot(time_sauda_sirdal, sauda_temp, label="Sauda værstasjon")
+plt.plot(times_sola_datetime, temperatures_sola, label="Sola værstasjon")
+plt.plot(valid_times, avg, label="UIS værstasjon, n=30")
 plt.xlabel("Tid")
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperaturer fra Sola, Sirdal, Sauda og filtrert UIS data")
 plt.legend()
 
-#Trykk PLOT
-plt.subplot(2, 2, 3)
-plt.title("Trykk fra begge værstasjoner")
-plt.plot(times_local_datetime, pressures_abs_local, label = "Absoluttrykk Lokal stasjon") 
-plt.plot(times_bar_local_datetime, pressures_bar_local, label = "Barometrisk trykk lokal stasjon") 
-plt.plot(times_sola_datetime, pressures_sola, label = "Barometrisk trykk Sola værstasjon") 
-plt.xlabel("Tid")
-plt.ylabel("Trykk Pha")
+plt.subplot(2, 3, 3)
+plt.hist(temperatures_local, bins=range(int(min(temperatures_local)), int(max(temperatures_local)) + 1), alpha=0.5, label="Lokal værstasjon")
+plt.hist(temperatures_sola, bins=range(int(min(temperatures_sola)), int(max(temperatures_sola)) + 1), alpha=0.5, label="Sola værstasjon")
+plt.xlabel("Temperatur (°C)")
+plt.ylabel("Antall")
+plt.title("Histogram over temperaturer")
 plt.legend()
 
-plt.xticks(rotation=45)
-plt.tight_layout()
+plt.subplot(2, 3, 4)
+plt.plot(times_local_datetime, pressures_abs_local, label="Absoluttrykk Lokal stasjon")
+plt.plot(times_bar_local_datetime, pressures_bar_local, label="Barometrisk trykk lokal stasjon")
+plt.plot(times_sola_datetime, pressures_sola, label="Barometrisk trykk Sola værstasjon")
+plt.xlabel("Tid")
+plt.ylabel("Trykk Pha")
+plt.title("Trykk fra begge værstasjoner")
+plt.legend()
 
-#Trykk fra nye data
-valid_time, average_pressure = moving_avg(times_bar_local_datetime, pressures_bar_local, 30)
-
-plt.subplot(2, 2, 4)
-plt.plot(time_sauda_sirdal, sirdal_trykk, label = "Sirdal lufttrykk")
-plt.plot(time_sauda_sirdal, sauda_trykk, label = "Sauda lufttrykk")
-plt.plot(times_sola_datetime, pressures_sola, label = "Barometrisk trykk Sola værstasjon")
-plt.plot(valid_time, average_pressure, label = "UIS lufttrykk, n = 30") 
-
+plt.subplot(2, 3, 5)
+plt.plot(time_sauda_sirdal, sirdal_trykk, label="Sirdal lufttrykk")
+plt.plot(time_sauda_sirdal, sauda_trykk, label="Sauda lufttrykk")
+plt.plot(times_sola_datetime, pressures_sola, label="Barometrisk trykk Sola værstasjon")
+plt.plot(valid_time, average_pressure, label="UIS lufttrykk, n=30")
 plt.xlabel("Tid")
 plt.ylabel("Trykk Pha")
 plt.title("Trykkmålinger fra Sirdal, Sauda, Sola og UIS")
 plt.legend()
 
-#plott temperaturfall fra begge filene
+plt.subplot(2, 3, 6)
+plt.plot(pr_diff_time, pr_diff_value, label="Differanse mellom absolutt og barometrisk trykk")
+plt.xlabel("Tid")
+plt.ylabel("Differanse i trykk")
+plt.title("Differanse mellom absolutt og barometrisk trykk")
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+#TEMPERATURFALL - Ligger under temperaturplot(Kan evt fjernes)
 plt.figure(figsize=(10, 5))
 plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturfall Lokal værstasjon")
 plt.plot(temperaturfall_times_sola, temperaturfall_values_sola, label="Temperaturfall Sola værstasjon")
 plt.xlabel("Tid")
 plt.ylabel("Temperatur (°C)")
 plt.title("Temperaturfall fra maks til min temperatur")
-plt.legend()
-
-#plott et histogram over temperaturene fra begge filene, bruk en hel grad for hver søyle
-plt.figure(figsize=(10, 5))
-plt.hist(temperatures_local, bins=range(int(min(temperatures_local)), int(max(temperatures_local)) + 1), alpha=0.5, label="Lokal værstasjon")#Lager histogram
-plt.hist(temperatures_sola, bins=range(int(min(temperatures_sola)), int(max(temperatures_sola)) + 1), alpha=0.5, label="Sola værstasjon")
-plt.xlabel("Temperatur (°C)")
-plt.ylabel("Antall")
-plt.title("Histogram over temperaturer")
 plt.legend()
 plt.show()
