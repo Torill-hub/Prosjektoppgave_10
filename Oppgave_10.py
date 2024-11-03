@@ -1,10 +1,9 @@
-#leser inn data fra filene
 import csv
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 
-def moving_avg(times, temperatures, n):#reduserer støy ved å beregne gjennomsnittet
+def moving_avg(times, temperatures, n): #reduserer støy ved å beregne gjennomsnittet
     valid_times = []
     avg =[]
 
@@ -68,6 +67,7 @@ with open("./LOKAL.csv", "r") as LOKAL:
                     
                 except ValueError:
                     pass
+                
             else:
                 try:
                     dato_obj = datetime.strptime(time, "%m.%d.%Y %H:%M")
@@ -184,12 +184,52 @@ bins_sola = np.arange(int(min(temperatures_sola)), int(max(temperatures_sola)) +
 pressure_diff_local = list()
 for i in range(len(pressures_bar_local)):
     pressure_diff = pressures_abs_local[i*6] - pressures_bar_local[i] #litt jank måte kanskje, men så i csv filen er det 6 barometriske trykk for hvert absolutte trykk
-    #print(pressure_diff) #for å sjekke at det er riktig
     pressure_diff_local.append(pressure_diff)
 pr_diff_time, pr_diff_value = moving_avg(times_bar_local_datetime, pressure_diff_local, 10) #Så vidt eg forstår så er "n" her antall bade foran og bak, altså 10 foran og 10 bak i funkjsonen
 
 #Trykk fra nye data
 valid_time, average_pressure = moving_avg(times_bar_local_datetime, pressures_bar_local, 30)
+
+#Standardavvik
+if len(temperatures_local_filtered) >= n:
+    std_dev_local = calculate_standard_deviation(temperatures_local_filtered, n)
+    times_local_std = times_local_filtered[n-1:]  # Align times with standard deviation
+else:
+    std_dev_local = []
+    times_local_std = []
+    
+# Oppgave e: Gjennomsnittlig forskjell mellom temperatur og trykk
+# Filtrere data for felles tidspunkter
+common_times = set(times_local_datetime).intersection(times_sola_datetime)
+common_times = sorted(common_times)
+ 
+# Beregne forskjeller i temperatur og trykk
+temp_diffs = []
+pressure_diffs = []
+for time in common_times:
+    local_index = times_local_datetime.index(time)
+    sola_index = times_sola_datetime.index(time)
+    temp_diff = abs(temperatures_local[local_index] - temperatures_sola[sola_index])
+    pressure_diff = abs(pressures_abs_local[local_index] - pressures_sola[sola_index])
+    temp_diffs.append(temp_diff)
+    pressure_diffs.append(pressure_diff)
+ 
+# Beregne gjennomsnittlig forskjell
+avg_temp_diff = np.mean(temp_diffs)
+avg_pressure_diff = np.mean(pressure_diffs)
+ 
+# Finne tidspunkter med lavest og høyest forskjell
+min_temp_diff_time = common_times[temp_diffs.index(min(temp_diffs))]
+max_temp_diff_time = common_times[temp_diffs.index(max(temp_diffs))]
+min_pressure_diff_time = common_times[pressure_diffs.index(min(pressure_diffs))]
+max_pressure_diff_time = common_times[pressure_diffs.index(max(pressure_diffs))]
+ 
+print(f"Gjennomsnittlig temperaturforskjell: {avg_temp_diff:.3f}")
+print(f"Gjennomsnittlig trykkforskjell: {avg_pressure_diff:.3f}")
+print(f"Minste temperaturforskjell: {min(temp_diffs):.3f} ved {min_temp_diff_time}")
+print(f"Største temperaturforskjell: {max(temp_diffs):.3f} ved {max_temp_diff_time}")
+print(f"Minste trykkforskjell: {min(pressure_diffs):.3f} ved {min_pressure_diff_time}")
+print(f"Største trykkforskjell: {max(pressure_diffs):.3f} ved {max_pressure_diff_time}")
 
 # Temperatur PLOT
 plt.figure(figsize=(30, 20))
@@ -218,18 +258,16 @@ plt.ylabel("Temperatur (°C)")
 plt.title("Temperaturer fra Sola, Sirdal, Sauda og filtrert UIS data")
 plt.legend()
 
-plt.subplot(2, 3, 3)
-n_lokal, _, _, = plt.hist(temperatures_local, bins=bins_lokal, alpha=0.5, label="Lokal værstasjon", width=0.8)
-n_sola, _, _, = plt.hist(temperatures_sola, bins=bins_sola, alpha=0.7, label="Sola værstasjon", width=0.8)
-# legger til antall målinger over søyler 
+plt.subplot(2, 4, 3)
+n_lokal, _, _ = plt.hist(temperatures_local, bins=bins_lokal, alpha=0.5, label="Lokal værstasjon", width=0.8)
+n_sola, _, _ = plt.hist(temperatures_sola, bins=bins_sola, alpha=0.7, label="Sola værstasjon", width=0.8)
+# Add counts above bars
 for i in range(len(n_lokal)):
-    if i < 10:
-        plt.text(bins_lokal[i] + 0.5, n_lokal[i], str(int(n_lokal[i])), ha='center', va='bottom')
+    plt.text(bins_lokal[i] + 0.5, n_lokal[i], str(int(n_lokal[i])), ha='center', va='bottom')
 for i in range(len(n_sola)):
     plt.text(bins_sola[i] + 0.5, n_sola[i], str(int(n_sola[i])), ha='center', va='bottom')
-
 plt.xlabel("Temperatur (°C)")
-plt.xticks(rotation = 30)
+plt.xticks(rotation=30)
 plt.ylabel("Antall")
 plt.title("Histogram over temperaturer")
 plt.legend()
@@ -271,16 +309,6 @@ plt.xlabel("Tid")
 plt.xticks(rotation = 45)
 plt.ylabel("Differanse i trykk")
 plt.title("Differanse mellom absolutt og barometrisk trykk")
-plt.legend()
-
-#TEMPERATURFALL - Ligger under temperaturplot(Kan evt fjernes)
-plt.figure(figsize=(10, 5))
-plt.plot(temperaturfall_times, temperaturfall_values, label="Temperaturfall Lokal værstasjon")
-plt.plot(temperaturfall_times_sola, temperaturfall_values_sola, label="Temperaturfall Sola værstasjon")
-plt.xlabel("Tid")
-plt.xticks(rotation = 45)
-plt.ylabel("Temperatur (°C)")
-plt.title("Temperaturfall fra maks til min temperatur")
 plt.legend()
 
 plt.show()
