@@ -96,6 +96,7 @@ with open("SOLA.csv", "r") as SOLA:
                 pass
  
 # Lesing av data fra temperatur_trykk_sauda_sinnes_samme_tidsperiode.csv (2).txt
+
 with open("temperatur_trykk_sauda_sinnes_samme_tidsperiode.csv (2).txt") as f:
     file = csv.reader(f, delimiter=";")
     next(file)
@@ -114,12 +115,12 @@ with open("temperatur_trykk_sauda_sinnes_samme_tidsperiode.csv (2).txt") as f:
                         time_sauda_sirdal.append(date_obj)
             except ValueError:
                 pass
- 
+
 # Konvertering av tidspunkter til datetime-objekter
 times_local_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_local]
 times_sola_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_sola]
 times_bar_local_datetime = [datetime.strptime(time, "%Y-%m-%d %H:%M:%S") for time in times_bar_local]
- 
+
 # Oppgave a: Temperaturfall for begge filene
 n=30
 valid_times, avg_local_temp = moving_avg(times_local_datetime, temperatures_local, n)
@@ -157,7 +158,7 @@ if temperatures_sola_filtered:
 else:
     temperaturfall_times_sola = []
     temperaturfall_values_sola = []
- 
+
 plt.figure(figsize=(10, 5))
 plt.plot(times_local_filtered, temperatures_local_filtered, label="Lokal værstasjon", color='blue')
 plt.plot(times_sola_filtered, temperatures_sola_filtered, label="Sola værstasjon", color="green")
@@ -166,17 +167,26 @@ plt.ylabel("Temperatur (°C)")
 plt.title("Temperaturfall")
 plt.legend()
 plt.show()
- 
+
 #Oppgave b: plott et histogram over temperaturene fra begge filene, bruk en hel grad for hver søyle
+bins_lokal = np.arange(int(min(temperatures_local)), int(max(temperatures_local)) + 2, 1)
+bins_sola = np.arange(int(min(temperatures_sola)), int(max(temperatures_sola)) + 2, 1)
 plt.figure(figsize=(10, 5))
-plt.hist(temperatures_local, bins=range(int(min(temperatures_local)), int(max(temperatures_local)) + 1), alpha=0.5, label="Lokal værstasjon")#Lager histogram
-plt.hist(temperatures_sola, bins=range(int(min(temperatures_sola)), int(max(temperatures_sola)) + 1), alpha=0.5, label="Sola værstasjon")
+n_lokal, _, _ = plt.hist(temperatures_local, bins=bins_lokal, alpha=0.5, label="Lokal værstasjon", width=0.8)#Lager histogram
+n_sola, _, _= plt.hist(temperatures_sola, bins=bins_sola, alpha=0.7, label="Sola værstasjon", width=0.8)
+
+for i in range(len(n_lokal)):
+    if i < 10:
+        plt.text(bins_lokal[i] + 0.5, n_lokal[i], str(int(n_lokal[i])), ha='center', va='bottom')
+for i in range(len(n_sola)):
+    plt.text(bins_sola[i] + 0.5, n_sola[i], str(int(n_sola[i])), ha='center', va='bottom')
+
 plt.xlabel("Temperatur (°C)")
 plt.ylabel("Antall")
 plt.title("Histogram over temperaturer")
 plt.legend()
 plt.show()
- 
+
 # Oppgave c: Differanse mellom absolutt og barometrisk trykk
 pressure_diff_local = [abs - bar for abs, bar in zip(pressures_abs_local, pressures_bar_local)]
 pr_diff_time, pr_diff_value = moving_avg(times_bar_local_datetime, pressure_diff_local, 10)

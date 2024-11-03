@@ -2,7 +2,7 @@
 import csv
 from datetime import datetime
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def moving_avg(times, temperatures, n):#reduserer støy ved å beregne gjennomsnittet
     valid_times = []
@@ -170,6 +170,9 @@ else:
     temperaturfall_times_sola = []
     temperaturfall_values_sola = []
 
+bins_lokal = np.arange(int(min(temperatures_local)), int(max(temperatures_local)) + 2, 1)
+bins_sola = np.arange(int(min(temperatures_sola)), int(max(temperatures_sola)) + 2, 1)
+
 #oppgave c: plott differansen mellom absolutt og barometrisk trykk i Lokal.csv
 pressure_diff_local = list()
 for i in range(len(pressures_bar_local)):
@@ -207,8 +210,14 @@ plt.title("Temperaturer fra Sola, Sirdal, Sauda og filtrert UIS data")
 plt.legend()
 
 plt.subplot(2, 3, 3)
-plt.hist(temperatures_local, bins=range(int(min(temperatures_local)), int(max(temperatures_local)) + 1), alpha=0.5, label="Lokal værstasjon")
-plt.hist(temperatures_sola, bins=range(int(min(temperatures_sola)), int(max(temperatures_sola)) + 1), alpha=0.5, label="Sola værstasjon")
+n_lokal, _, _ = plt.hist(temperatures_local, bins=bins_lokal, alpha=0.5, label="Lokal værstasjon", width= 0.8)
+n_sola, _, _ = plt.hist(temperatures_sola, bins=bins_sola, alpha=0.7, label="Sola værstasjon", width=0.8)
+#legger til antall målinger over søylene
+for i in range(len(n_lokal)):
+    if i < 10:
+        plt.text(bins_lokal[i] + 0.5, n_lokal[i], str(int(n_lokal[i])), ha='center', va='bottom')
+for i in range(len(n_sola)):
+    plt.text(bins_sola[i] + 0.5, n_sola[i], str(int(n_sola[i])), ha='center', va='bottom')
 plt.xlabel("Temperatur (°C)")
 plt.ylabel("Antall")
 plt.title("Histogram over temperaturer")
